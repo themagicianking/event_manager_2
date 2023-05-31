@@ -26,11 +26,23 @@ def clean_phone_number(phone)
   if phone.length == 11 && phone[0] == 1
     phone[1..10]
   elsif phone.length < 10 || phone.length >= 11
-    "You can sign up for mobile text alerts at our website"
+    "No phone number provided."
   else
     phone
   end
 end
+
+def get_hour(date)
+  Time.strptime(date, "%m/%d/%Y %H:%M").hour
+end
+
+def get_peak_hours(hours)
+  peak = hours.max_by { |i| hours.count(i)}
+  hours.delete(peak)
+  peak_two = hours.max_by { |i| hours.count(i)}
+  puts "The peak hours for registration: #{peak}:00 and #{peak_two}:00."
+end
+# method that will determine which hour(s) were most popular
 
 def save_thank_you_letter(id, form_letter)
   Dir.mkdir("output") unless Dir.exist?("output")
@@ -53,15 +65,20 @@ contents = CSV.open(
 template_letter = File.read("form_letter.erb")
 erb_template = ERB.new template_letter
 
+peak_hours = []
+
 contents.each do |row|
   id = row[0]
   name = row[:first_name]
   zipcode = clean_zipcode(row[:zipcode])
   legislators = legislators_by_zipcode(zipcode)
   phone_number = clean_phone_number(row[:homephone])
+  hour = get_hour(row[:regdate])
 
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id, form_letter)
-  puts phone_number
+  peak_hours.push(hour)
 end
+
+get_peak_hours(peak_hours)
