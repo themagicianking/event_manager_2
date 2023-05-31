@@ -36,13 +36,23 @@ def get_hour(date)
   Time.strptime(date, "%m/%d/%Y %H:%M").hour
 end
 
+def get_weekday(date)
+  Date::DAYNAMES[Time.strptime(date, "%m/%d/%Y %H:%M").wday]
+end
+
 def get_peak_hours(hours)
   peak = hours.max_by { |i| hours.count(i)}
   hours.delete(peak)
   peak_two = hours.max_by { |i| hours.count(i)}
   puts "The peak hours for registration: #{peak}:00 and #{peak_two}:00."
 end
-# method that will determine which hour(s) were most popular
+
+def get_peak_weekdays(days)
+  peak = days.max_by { |i| days.count(i)}
+  days.delete(peak)
+  peak_two = days.max_by { |i| days.count(i)}
+  puts "The peak days for registration: #{peak} and #{peak_two}."
+end
 
 def save_thank_you_letter(id, form_letter)
   Dir.mkdir("output") unless Dir.exist?("output")
@@ -66,6 +76,7 @@ template_letter = File.read("form_letter.erb")
 erb_template = ERB.new template_letter
 
 peak_hours = []
+peak_weekdays = []
 
 contents.each do |row|
   id = row[0]
@@ -74,11 +85,14 @@ contents.each do |row|
   legislators = legislators_by_zipcode(zipcode)
   phone_number = clean_phone_number(row[:homephone])
   hour = get_hour(row[:regdate])
+  weekday = get_weekday(row[:regdate])
 
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id, form_letter)
   peak_hours.push(hour)
+  peak_weekdays.push(weekday)
 end
 
 get_peak_hours(peak_hours)
+get_peak_weekdays(peak_weekdays)
